@@ -1,0 +1,491 @@
+---
+---
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>Bodevia — Almacenes inteligentes en 3D, control de inventario y rutas óptimas</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet" />
+  </head>
+  <body class="bg-[#F6F5F0] text-[#1E293B] font-sans antialiased selection:bg-[#F59E0B]/30 selection:text-[#1E293B] overflow-x-hidden">
+    <canvas id="webgl-canvas" class="fixed inset-0 w-full h-full z-0 pointer-events-auto"></canvas>
+
+    <header class="fixed top-4 inset-x-0 z-50 px-3 sm:px-6 pointer-events-none">
+      <div class="max-w-[1400px] mx-auto flex items-center justify-between gap-4 bg-white/95 backdrop-blur-sm border border-[#E2E0D8] rounded-full px-4 sm:px-6 py-2.5 shadow-xl pointer-events-auto">
+        <a href="#sec-0" class="flex items-center gap-2.5 shrink-0 group">
+          <svg class="w-11 h-11 shrink-0 group-hover:scale-105 transition-transform" viewBox="0 0 40 40" fill="none">
+            <path d="M20 4L35 11.5L20 19L5 11.5L20 4Z" fill="#F59E0B" />
+            <path d="M5 11.5L20 19V35L5 27.5V11.5Z" fill="#F97316" />
+            <path d="M35 11.5L20 19V35L35 27.5V11.5Z" fill="#2563EB" />
+            <path d="M20 9.5L27.5 13.25L20 17L12.5 13.25L20 9.5Z" fill="#FFFFFF" />
+            <circle cx="20" cy="19" r="2.8" fill="#FFFFFF" />
+            <path d="M20 19L30 24" stroke="#10B981" stroke-width="2.8" stroke-linecap="round" />
+            <circle cx="30" cy="24" r="3.2" fill="#10B981" stroke="#FFFFFF" stroke-width="1.4" />
+          </svg>
+
+          <div class="flex items-center">
+            <span class="font-display font-bold text-2xl tracking-tight text-[#1E293B]">Bode</span>
+            <span class="font-display font-bold text-2xl tracking-tight px-2.5 py-0.5 ml-0.5 rounded-xl bg-gradient-to-r from-[#FF5A5F] to-[#F97316] text-white shadow-sm">
+              via
+            </span>
+          </div>
+        </a>
+
+        <nav class="hidden lg:flex items-center justify-end gap-1 bg-[#F6F5F0] p-1.5 rounded-full border border-[#E2E0D8]">
+          <a href="#sec-0" data-nav="0" class="nav-pill whitespace-nowrap px-3.5 py-1.5 rounded-full text-xs font-bold text-[#1E293B] bg-white shadow-sm transition-all">0. Tus Ítems</a>
+          <a href="#sec-1" data-nav="1" class="nav-pill whitespace-nowrap px-3.5 py-1.5 rounded-full text-xs font-semibold text-[#334155] hover:text-[#1E293B] transition-all">1. Modo Diseño</a>
+          <a href="#sec-2" data-nav="2" class="nav-pill whitespace-nowrap px-3.5 py-1.5 rounded-full text-xs font-semibold text-[#334155] hover:text-[#1E293B] transition-all">2. Motor Bodevia</a>
+          <a href="#sec-3" data-nav="3" class="nav-pill whitespace-nowrap px-3.5 py-1.5 rounded-full text-xs font-semibold text-[#334155] hover:text-[#1E293B] transition-all">3. Cero Pérdidas</a>
+          <a href="#sec-4" data-nav="4" class="nav-pill whitespace-nowrap px-3.5 py-1.5 rounded-full text-xs font-semibold text-[#334155] hover:text-[#1E293B] transition-all">4. Escalabilidad</a>
+          <a href="#sec-5" data-nav="5" class="nav-pill whitespace-nowrap px-3.5 py-1.5 rounded-full text-xs font-semibold text-[#334155] hover:text-[#1E293B] transition-all">5. Rutas Óptimas</a>
+          <a href="#sec-6" data-nav="6" class="nav-pill whitespace-nowrap px-3.5 py-1.5 rounded-full text-xs font-semibold text-[#334155] hover:text-[#1E293B] transition-all">6. Impacto Real</a>
+        </nav>
+      </div>
+    </header>
+
+    <aside class="fixed bottom-5 right-5 z-40 hidden md:flex flex-col gap-2 bg-white/95 border border-[#E2E0D8] rounded-3xl p-4 shadow-xl pointer-events-auto max-w-xs">
+      <div class="flex items-center justify-between gap-3 pb-1.5 border-b border-[#E2E0D8]">
+        <span id="legend-sector-title" class="text-[11px] font-extrabold uppercase tracking-wider text-[#334155]">Ítems en Maqueta 3D</span>
+        <span id="scene-stage-badge" class="text-[11px] font-bold bg-[#F59E0B]/20 text-[#1E293B] px-2.5 py-0.5 rounded-full whitespace-nowrap">00 · Tus Ítems</span>
+      </div>
+      <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs font-semibold text-[#1E293B] pt-1">
+        <div class="flex items-center gap-2">
+          <span class="w-3.5 h-3.5 rounded-md bg-[#2563EB] shadow-sm shrink-0"></span>
+          <span id="legend-item-1">Gran Volumen</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-3.5 h-3.5 rounded-md bg-[#FF5A5F] shadow-sm shrink-0"></span>
+          <span id="legend-item-2">Alta Rotación</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-3.5 h-3.5 rounded-md bg-[#10B981] shadow-sm shrink-0"></span>
+          <span id="legend-item-3">Cuidado / Frágil</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-3.5 h-3.5 rounded-md bg-[#8B5CF6] shadow-sm shrink-0"></span>
+          <span id="legend-item-4">Pedidos Express</span>
+        </div>
+      </div>
+    </aside>
+
+    <main class="relative z-10 pointer-events-none">
+      <section id="sec-0" class="min-h-screen w-full flex items-center px-4 sm:px-8 lg:px-16 pt-24 pb-12">
+        <div class="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 items-center">
+          <div class="lg:col-span-5 bg-white/95 border border-[#E2E0D8] rounded-3xl p-7 sm:p-9 shadow-xl pointer-events-auto">
+            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#8B5CF6]/15 border border-[#8B5CF6]/40 text-[#8B5CF6] text-xs font-extrabold tracking-wide uppercase mb-5">
+              <span class="w-2 h-2 rounded-full bg-[#8B5CF6]"></span>
+              <span>00 · Diseña tus Ítems y Catálogo</span>
+            </div>
+
+            <h1 class="font-display font-bold text-3xl sm:text-4xl leading-tight text-[#1E293B] mb-4">
+              Bode<span class="text-[#FF5A5F]">via</span> se adapta a cualquier producto que muevas.
+            </h1>
+
+            <p class="text-base sm:text-lg text-[#334155] leading-relaxed mb-5 font-medium">
+              Alimentos, bebidas, tecnología, retail o insumos industriales. Define qué ítems manejas, sus dimensiones, peso y rotación para que el almacén se configure a tu medida.
+            </p>
+
+            <div class="bg-[#F6F5F0] border border-[#E2E0D8] rounded-2xl p-4 mb-5">
+              <span class="text-xs font-extrabold uppercase tracking-wider text-[#334155] block mb-2.5">
+                Selecciona el giro de tus productos:
+              </span>
+              <div class="grid grid-cols-2 gap-2">
+                <button type="button" data-preset="general" class="preset-btn px-3 py-2.5 rounded-xl text-xs font-bold bg-[#1E293B] text-white shadow-sm transition-all cursor-pointer text-left flex items-center justify-between">
+                  <span>Comercio General</span>
+                  <span class="w-2 h-2 rounded-full bg-[#F59E0B]"></span>
+                </button>
+                <button type="button" data-preset="food" class="preset-btn px-3 py-2.5 rounded-xl text-xs font-bold bg-white text-[#1E293B] border border-[#E2E0D8] hover:border-[#F97316] transition-all cursor-pointer text-left flex items-center justify-between">
+                  <span>Alimentos y Bebidas</span>
+                  <span class="w-2 h-2 rounded-full bg-[#10B981]"></span>
+                </button>
+                <button type="button" data-preset="tech" class="preset-btn px-3 py-2.5 rounded-xl text-xs font-bold bg-white text-[#1E293B] border border-[#E2E0D8] hover:border-[#F97316] transition-all cursor-pointer text-left flex items-center justify-between">
+                  <span>Tecnología y Equipos</span>
+                  <span class="w-2 h-2 rounded-full bg-[#2563EB]"></span>
+                </button>
+                <button type="button" data-preset="retail" class="preset-btn px-3 py-2.5 rounded-xl text-xs font-bold bg-white text-[#1E293B] border border-[#E2E0D8] hover:border-[#F97316] transition-all cursor-pointer text-left flex items-center justify-between">
+                  <span>Moda, Retail y Hogar</span>
+                  <span class="w-2 h-2 rounded-full bg-[#FF5A5F]"></span>
+                </button>
+              </div>
+            </div>
+
+            <button
+              id="btn-configure-items"
+              type="button"
+              class="w-full py-4 px-6 rounded-full bg-gradient-to-r from-[#8B5CF6] to-[#2563EB] hover:opacity-95 text-white font-bold text-base shadow-lg hover:shadow-xl transition-all duration-200 active:scale-95 flex items-center justify-center gap-2.5 cursor-pointer"
+            >
+              <span id="btn-configure-items-label">Generar Ítems Inteligentes en 3D</span>
+            </button>
+
+            <div class="mt-3.5 flex items-center justify-between text-xs text-[#334155] font-semibold px-1">
+              <span id="item-profile-status">Perfil activo: Comercio General</span>
+              <span class="text-[#8B5CF6] font-bold">Dimensiones y pesos listos</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="sec-1" class="min-h-screen w-full flex items-center px-4 sm:px-8 lg:px-16 py-16">
+        <div class="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 items-center">
+          <div class="lg:col-start-8 lg:col-span-5 bg-white/95 border border-[#E2E0D8] rounded-3xl p-7 sm:p-9 shadow-xl pointer-events-auto">
+            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#F59E0B]/15 border border-[#F59E0B]/40 text-[#1E293B] text-xs font-extrabold tracking-wide uppercase mb-5">
+              <span class="w-2 h-2 rounded-full bg-[#F59E0B]"></span>
+              <span>01 · Modo Diseño Espacial</span>
+            </div>
+
+            <h2 class="font-display font-bold text-3xl sm:text-4xl leading-tight text-[#1E293B] mb-4">
+              Dibuja y digitaliza tu almacén en minutos.
+            </h2>
+
+            <p class="text-base sm:text-lg text-[#334155] leading-relaxed mb-6 font-medium">
+              Toma fotos desde tu celular, graba un recorrido o ingresa las medidas del perímetro para levantar tu almacén inteligente en 3D, donde cada estantería se ajusta a los productos que manejas.
+            </p>
+
+            <div class="bg-[#F6F5F0] border border-[#E2E0D8] rounded-2xl p-4 mb-6">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-extrabold uppercase tracking-wider text-[#334155]">Cálculo de Espacio según tus Ítems</span>
+                <span id="capacity-badge" class="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-[#F59E0B]/25 text-[#1E293B]">12 Módulos Activos</span>
+              </div>
+              <p id="capacity-text" class="font-display font-bold text-lg text-[#1E293B] mb-2.5">
+                Aprovechamiento del Perímetro: 84%
+              </p>
+              <div class="w-full h-3 bg-[#E2E0D8] rounded-full overflow-hidden">
+                <div id="capacity-bar" class="h-full bg-gradient-to-r from-[#F59E0B] to-[#10B981] rounded-full transition-all duration-700" style="width: 84%"></div>
+              </div>
+            </div>
+
+            <button
+              id="btn-add-rack"
+              type="button"
+              class="w-full py-4 px-6 rounded-full bg-gradient-to-r from-[#F59E0B] to-[#F97316] hover:from-[#F97316] hover:to-[#FF5A5F] text-white font-bold text-base shadow-lg hover:shadow-xl transition-all duration-200 active:scale-95 flex items-center justify-center gap-2.5 cursor-pointer"
+            >
+              <span class="text-xl leading-none">＋</span>
+              <span id="btn-add-rack-label">Añadir Estantería al Plano 3D</span>
+            </button>
+
+            <div class="mt-4 flex items-center justify-between text-xs text-[#334155] font-semibold px-1">
+              <span>Escaneo de perímetro y alturas automático</span>
+              <span class="text-[#10B981] font-bold">Capacidad calculada al instante</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="sec-2" class="min-h-screen w-full flex items-center px-4 sm:px-8 lg:px-16 py-16">
+        <div class="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 items-center">
+          <div class="lg:col-span-5 bg-white/95 border border-[#E2E0D8] rounded-3xl p-7 sm:p-9 shadow-xl pointer-events-auto">
+            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#FF5A5F]/15 border border-[#FF5A5F]/40 text-[#FF5A5F] text-xs font-extrabold tracking-wide uppercase mb-5">
+              <span class="w-2 h-2 rounded-full bg-[#FF5A5F]"></span>
+              <span>02 · Motor Bodevia (MRP + WMS)</span>
+            </div>
+
+            <h2 class="font-display font-bold text-3xl sm:text-4xl leading-tight text-[#1E293B] mb-4">
+              El motor inteligente que calcula imprevistos, flujo y orden.
+            </h2>
+
+            <p class="text-base sm:text-lg text-[#334155] leading-relaxed mb-6 font-medium">
+              El Motor Bodevia une tu planificación de abastecimiento (MRP) y gestión de almacén (WMS). Si cambia el clima, se cierra un acceso o entra un pedido urgente, recalcula guías, prioridades y ubicaciones al instante.
+            </p>
+
+            <div class="grid grid-cols-2 gap-3 mb-6">
+              <div class="bg-[#F6F5F0] border border-[#E2E0D8] rounded-2xl p-3.5">
+                <span class="text-[11px] font-bold uppercase text-[#334155] block mb-1">Estado de Accesos</span>
+                <span id="door-status-text" class="font-display font-bold text-sm text-[#10B981] flex items-center gap-1.5">
+                  <span id="door-status-dot" class="w-2.5 h-2.5 rounded-full bg-[#10B981]"></span>
+                  Flujo WMS Normal
+                </span>
+              </div>
+              <div class="bg-[#F6F5F0] border border-[#E2E0D8] rounded-2xl p-3.5">
+                <span class="text-[11px] font-bold uppercase text-[#334155] block mb-1">Guía de Orden MRP</span>
+                <span id="slotting-priority-text" class="font-display font-bold text-sm text-[#1E293B]">
+                  Secuencia Estándar
+                </span>
+              </div>
+            </div>
+
+            <button
+              id="btn-simulate-chaos"
+              type="button"
+              class="w-full py-4 px-6 rounded-full bg-[#FF5A5F] hover:bg-[#e0484d] text-white font-bold text-base shadow-lg hover:shadow-xl transition-all duration-200 active:scale-95 flex items-center justify-center gap-2.5 cursor-pointer"
+            >
+              <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 13v8" />
+                <path d="M8 13v8" />
+                <path d="M12 15v8" />
+                <path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25" />
+              </svg>
+              <span id="btn-simulate-chaos-label">Simular Imprevisto y Reordenar Flujo</span>
+            </button>
+
+            <p id="chaos-helper-text" class="mt-4 text-xs font-semibold text-[#334155] text-center">
+              Reorganiza automáticamente los ítems prioritarios hacia la salida activa con guías paso a paso.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="sec-3" class="min-h-screen w-full flex items-center px-4 sm:px-8 lg:px-16 py-16">
+        <div class="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 items-center">
+          <div class="lg:col-start-8 lg:col-span-5 bg-white/95 border border-[#E2E0D8] rounded-3xl p-7 sm:p-9 shadow-xl pointer-events-auto">
+            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#2563EB]/15 border border-[#2563EB]/40 text-[#2563EB] text-xs font-extrabold tracking-wide uppercase mb-5">
+              <span class="w-2 h-2 rounded-full bg-[#2563EB]"></span>
+              <span>03 · Control Inteligente e Integridad</span>
+            </div>
+
+            <h2 class="font-display font-bold text-3xl sm:text-4xl leading-tight text-[#1E293B] mb-4">
+              Cero ítems rotos y cero pérdidas.
+            </h2>
+
+            <p class="text-base sm:text-lg text-[#334155] leading-relaxed mb-6 font-medium">
+              Con el control inteligente sabrás exactamente dónde va cada producto, dónde debe reposar y cómo trasladarlo. Nunca más tendrás pérdidas, extravíos, caídas o mercadería dañada, optimizando todo el flujo de despacho.
+            </p>
+
+            <div class="space-y-2.5 mb-6 bg-[#F6F5F0] border border-[#E2E0D8] rounded-2xl p-4">
+              <div class="flex items-center justify-between text-xs font-bold">
+                <span class="flex items-center gap-2 text-[#1E293B]">
+                  <span class="w-3 h-3 rounded bg-[#10B981]"></span>
+                  Nivel Superior: Ítems Delicados y Frágiles
+                </span>
+                <span class="text-[#10B981]">Cero Caídas</span>
+              </div>
+              <div class="flex items-center justify-between text-xs font-bold">
+                <span class="flex items-center gap-2 text-[#1E293B]">
+                  <span class="w-3 h-3 rounded bg-[#FF5A5F]"></span>
+                  Nivel Medio: Alta Rotación y Prioritarios
+                </span>
+                <span class="text-[#F97316]">Control Total</span>
+              </div>
+              <div class="flex items-center justify-between text-xs font-bold">
+                <span class="flex items-center gap-2 text-[#1E293B]">
+                  <span class="w-3 h-3 rounded bg-[#2563EB]"></span>
+                  Base Firme: Carga Pesada y Gran Volumen
+                </span>
+                <span class="text-[#2563EB]">Soporte Seguro</span>
+              </div>
+              <div class="pt-2 border-t border-[#E2E0D8] flex items-center justify-between">
+                <span class="text-xs font-extrabold uppercase text-[#334155]">Integridad y Ocupación</span>
+                <span id="packing-score" class="font-display font-bold text-base text-[#2563EB]">72% → Lista para ordenar</span>
+              </div>
+            </div>
+
+            <button
+              id="btn-repack"
+              type="button"
+              class="w-full py-4 px-6 rounded-full bg-[#2563EB] hover:bg-[#1d4ed8] text-white font-bold text-base shadow-lg hover:shadow-xl transition-all duration-200 active:scale-95 flex items-center justify-center gap-2.5 cursor-pointer"
+            >
+              <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                <polyline points="7.5 4.21 12 6.81 16.5 4.21" />
+                <polyline points="7.5 19.79 7.5 14.6 3 12" />
+                <polyline points="21 12 16.5 14.6 16.5 19.79" />
+              </svg>
+              <span id="btn-repack-label">Ordenar Carga sin Pérdidas (98%)</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section id="sec-4" class="min-h-screen w-full flex items-center px-4 sm:px-8 lg:px-16 py-16">
+        <div class="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 items-center">
+          <div class="lg:col-span-5 bg-white/95 border border-[#E2E0D8] rounded-3xl p-7 sm:p-9 shadow-xl pointer-events-auto">
+            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#F97316]/15 border border-[#F97316]/40 text-[#F97316] text-xs font-extrabold tracking-wide uppercase mb-5">
+              <span class="w-2 h-2 rounded-full bg-[#F97316]"></span>
+              <span>04 · Escalabilidad Total</span>
+            </div>
+
+            <h2 class="font-display font-bold text-3xl sm:text-4xl leading-tight text-[#1E293B] mb-4">
+              Crece sin límites y multiplica tu flujo operativo.
+            </h2>
+
+            <p class="text-base sm:text-lg text-[#334155] leading-relaxed mb-6 font-medium">
+              Se adapta a tu negocio y a tus herramientas disponibles: personas a pie, carritos, bicicletas de reparto o montacargas. Suma más recursos sin atascar los pasillos.
+            </p>
+
+            <div class="bg-[#F6F5F0] border border-[#E2E0D8] rounded-2xl p-4 mb-6 flex items-center justify-between">
+              <div>
+                <span class="text-[11px] font-bold uppercase text-[#334155] block">Recursos en Movimiento</span>
+                <span id="traffic-clock" class="font-display font-bold text-xl text-[#1E293B]">Equipos Base · Flujo Normal</span>
+              </div>
+              <div class="text-right">
+                <span class="text-[11px] font-bold uppercase text-[#334155] block">Coordinación</span>
+                <span id="lane-status-badge" class="inline-block mt-0.5 text-xs font-extrabold px-3 py-1 rounded-full bg-[#F59E0B]/25 text-[#1E293B]">
+                  Flujo Estándar
+                </span>
+              </div>
+            </div>
+
+            <button
+              id="btn-rush-hour"
+              type="button"
+              class="w-full py-4 px-6 rounded-full bg-[#F97316] hover:bg-[#ea580c] text-white font-bold text-base shadow-lg hover:shadow-xl transition-all duration-200 active:scale-95 flex items-center justify-center gap-2.5 cursor-pointer"
+            >
+              <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+              </svg>
+              <span id="btn-rush-hour-label">Escalar Operación (+Equipos y Cámara Rápida)</span>
+            </button>
+
+            <p class="mt-4 text-xs font-semibold text-[#334155] text-center">
+              Coordina operarios, bicicletas, carritos o vehículos en tiempo real por vías rápidas sin colisiones.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="sec-5" class="min-h-screen w-full flex items-center px-4 sm:px-8 lg:px-16 py-16">
+        <div class="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 items-center">
+          <div class="lg:col-start-8 lg:col-span-5 bg-white/95 border border-[#E2E0D8] rounded-3xl p-7 sm:p-9 shadow-xl pointer-events-auto">
+            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#10B981]/15 border border-[#10B981]/40 text-[#10B981] text-xs font-extrabold tracking-wide uppercase mb-5">
+              <span class="w-2 h-2 rounded-full bg-[#10B981]"></span>
+              <span>05 · Rutas Óptimas y Entregas Exactas</span>
+            </div>
+
+            <h2 class="font-display font-bold text-3xl sm:text-4xl leading-tight text-[#1E293B] mb-4">
+              Cero tiempos muertos y trazabilidad para cada cliente.
+            </h2>
+
+            <p class="text-base sm:text-lg text-[#334155] leading-relaxed mb-6 font-medium">
+              Bodevia calcula pedidos pendientes, orden de carga y todas las variables de tráfico. Tus clientes saben dónde está su paquete y qué día y hora llegará con exactitud.
+            </p>
+
+            <div class="bg-[#F6F5F0] border border-[#E2E0D8] rounded-2xl p-4 mb-6">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-extrabold uppercase tracking-wider text-[#334155]">Hoja de Ruta y Seguimiento</span>
+                <span id="route-mode-badge" class="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-[#10B981]/20 text-[#1E293B]">Ruta Óptima A</span>
+              </div>
+              <div id="lifo-sequence-list" class="space-y-2 text-xs font-bold text-[#1E293B]">
+                <div class="flex items-center justify-between bg-white rounded-xl px-3 py-2 border border-[#E2E0D8]">
+                  <span class="flex items-center gap-2">
+                    <span id="stop-1-dot" class="w-3 h-3 rounded-full bg-[#FF5A5F]"></span>
+                    <span id="stop-1-name">1ª Entrega: Punto Comercial Centro</span>
+                  </span>
+                  <span class="text-[#10B981]">Llegada Hoy · 10:15 AM</span>
+                </div>
+                <div class="flex items-center justify-between bg-white rounded-xl px-3 py-2 border border-[#E2E0D8]">
+                  <span class="flex items-center gap-2">
+                    <span id="stop-2-dot" class="w-3 h-3 rounded-full bg-[#2563EB]"></span>
+                    <span id="stop-2-name">2ª Entrega: Distribuidora Sur</span>
+                  </span>
+                  <span class="text-[#334155]">Llegada Hoy · 11:00 AM</span>
+                </div>
+                <div class="flex items-center justify-between bg-white rounded-xl px-3 py-2 border border-[#E2E0D8]">
+                  <span class="flex items-center gap-2">
+                    <span id="stop-3-dot" class="w-3 h-3 rounded-full bg-[#10B981]"></span>
+                    <span id="stop-3-name">3ª Entrega: Centro Logístico Norte</span>
+                  </span>
+                  <span class="text-[#334155]">Llegada Hoy · 11:40 AM</span>
+                </div>
+              </div>
+            </div>
+
+            <button
+              id="btn-change-route"
+              type="button"
+              class="w-full py-4 px-6 rounded-full bg-[#8B5CF6] hover:bg-[#7c3aed] text-white font-bold text-base shadow-lg hover:shadow-xl transition-all duration-200 active:scale-95 flex items-center justify-center gap-2.5 cursor-pointer"
+            >
+              <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="6" cy="19" r="3" />
+                <path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15" />
+                <circle cx="18" cy="5" r="3" />
+              </svg>
+              <span id="btn-change-route-label">Recalcular Ruta por Tráfico en Vivo</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section id="sec-6" class="min-h-screen w-full flex items-center px-4 sm:px-8 lg:px-16 py-16">
+        <div class="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 items-center">
+          <div class="lg:col-span-6 bg-white/95 border border-[#E2E0D8] rounded-3xl p-7 sm:p-10 shadow-xl pointer-events-auto">
+            <div class="flex flex-wrap items-center gap-2 mb-5">
+              <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#F59E0B]/20 border border-[#F59E0B]/40 text-[#1E293B] text-xs font-extrabold tracking-wide uppercase">
+                <span class="w-2 h-2 rounded-full bg-[#10B981]"></span>
+                <span>06 · Calculadora de Impacto</span>
+              </div>
+              <div class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#FF5A5F] to-[#F97316] text-white text-xs font-extrabold tracking-wide uppercase shadow-sm">
+                <span>Próximamente Disponible</span>
+              </div>
+            </div>
+
+            <h2 class="font-display font-bold text-3xl sm:text-4xl leading-tight text-[#1E293B] mb-3">
+              Calcula el impacto real de Bode<span class="text-[#FF5A5F]">via</span> en tu operación.
+            </h2>
+
+            <p class="text-base text-[#334155] leading-relaxed mb-6 font-medium">
+              Simula tu volumen de despachos diarios para proyectar el ahorro mensual en tiempos operativos, control de pérdidas y kilómetros de entrega.
+            </p>
+
+            <div class="bg-[#F6F5F0] border border-[#E2E0D8] rounded-2xl p-5 mb-6">
+              <div class="flex items-center justify-between mb-3">
+                <label for="orders-slider" class="text-sm font-bold text-[#1E293B]">
+                  Pedidos despachados por día:
+                </label>
+                <span id="orders-value-badge" class="font-display font-bold text-xl bg-white border border-[#E2E0D8] px-4 py-1 rounded-full text-[#F97316] shadow-sm">
+                  150 pedidos
+                </span>
+              </div>
+
+              <input
+                id="orders-slider"
+                type="range"
+                min="10"
+                max="500"
+                step="5"
+                value="150"
+                class="w-full h-3 bg-[#E2E0D8] rounded-lg appearance-none cursor-pointer accent-[#F97316]"
+              />
+
+              <div class="flex justify-between text-[11px] font-bold text-[#334155] mt-2">
+                <span>10 pedidos/día</span>
+                <span>250 pedidos/día</span>
+                <span>500 pedidos/día</span>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+              <div class="bg-gradient-to-br from-[#F59E0B]/15 to-[#F97316]/10 border border-[#F59E0B]/30 rounded-2xl p-4">
+                <span class="text-xs font-extrabold uppercase tracking-wider text-[#334155] block mb-1">
+                  Horas operativas ahorradas
+                </span>
+                <div class="flex items-baseline gap-1.5">
+                  <span id="metric-hours" class="font-display font-bold text-3xl sm:text-4xl text-[#1E293B]">135</span>
+                  <span class="text-sm font-bold text-[#F97316]">hrs / mes</span>
+                </div>
+                <span class="text-xs font-semibold text-[#334155] mt-1 block">Cero tiempos muertos y ubicación exacta</span>
+              </div>
+
+              <div class="bg-gradient-to-br from-[#10B981]/15 to-[#2563EB]/10 border border-[#10B981]/30 rounded-2xl p-4">
+                <span class="text-xs font-extrabold uppercase tracking-wider text-[#334155] block mb-1">
+                  Recorrido logístico ahorrado
+                </span>
+                <div class="flex items-baseline gap-1.5">
+                  <span id="metric-km" class="font-display font-bold text-3xl sm:text-4xl text-[#1E293B]">1,800</span>
+                  <span class="text-sm font-bold text-[#10B981]">km / mes</span>
+                </div>
+                <span class="text-xs font-semibold text-[#334155] mt-1 block">Rutas óptimas sin entregas fallidas</span>
+              </div>
+            </div>
+
+            <div class="w-full py-4 px-6 rounded-2xl bg-[#1E293B] text-white shadow-lg flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
+              <div class="flex items-center gap-2.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-[#10B981] animate-pulse shrink-0"></span>
+                <span class="font-display font-bold text-sm sm:text-base">Próximamente se lanzará</span>
+              </div>
+              <a href="mailto:iadso.ao@gmail.com" class="text-xs sm:text-sm font-bold text-[#F59E0B] hover:underline">
+                Contacto: iadso.ao@gmail.com
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      import '../scripts/scene3d.js';
+    </script>
+  </body>
+</html>

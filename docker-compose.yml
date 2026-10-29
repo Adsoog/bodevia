@@ -1,0 +1,17 @@
+services:
+  bodevia-web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: bodevia-web
+    ports:
+      - "4321:4321"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - HOST=0.0.0.0
+      - PORT=4321
+      - CHOKIDAR_USEPOLLING=true
+    restart: unless-stopped
